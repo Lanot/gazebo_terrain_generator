@@ -14,6 +14,6 @@ export GAZEBO_MODEL_PATH="$cur_dir/gazebo/worlds/models"
 mkdir -p $GAZEBO_WORLD_PATH
 mkdir -p $GAZEBO_MODEL_PATH
 
-export MAPBOX_API_KEY=""
+# export MAPBOX_API_KEY=""
 
 python scripts/server.py
