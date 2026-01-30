@@ -21,4 +21,4 @@ class globalParam:
     MAPBOX_API_KEY = os.getenv('MAPBOX_API_KEY')
 
     # Free Mapbox API Key
-    # MAPBOX_API_KEY = "pk.eyJ1Ijoic2FpYXJhdmluZDE5NDAiLCJhIjoiY2x0d2s5cnVzMDBmeTJpcGYzcTRvenQxOSJ9.QTaaQ1TT1J4AbqlZS-akHA"
+    # MAPBOX_API_KEY               = "pk.eyJ1IjoiYXJhdmluZDE5NDAiLCJhIjoiY21jNDVyYTM5MDdxYjJqc2FjczA3bTBmeSJ9.kNLCV2BhlN0CRCOBJIpM1A"
