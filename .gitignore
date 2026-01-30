@@ -4,3 +4,4 @@ output/
 terrain_generator/
 temp/
 *.pyc
+.idea
