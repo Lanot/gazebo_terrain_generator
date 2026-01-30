@@ -14,6 +14,7 @@ export GAZEBO_MODEL_PATH="$cur_dir/gazebo/worlds/models"
 mkdir -p $GAZEBO_WORLD_PATH
 mkdir -p $GAZEBO_MODEL_PATH
 
-# export MAPBOX_API_KEY=""
+# Uncomment the line below and add your API KEY, or add the line to ~/.bashrc for permanent store
+# export MAPBOX_API_KEY="Personal API Key"
 
 python scripts/server.py
