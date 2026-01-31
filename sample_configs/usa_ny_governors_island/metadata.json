@@ -1,0 +1,16 @@
+{
+  "name": "{z}/{x}/{y}.png",
+  "description": "Map Tiles Downloader via AliFlux",
+  "format": "jpg",
+  "bounds": "-74.02862548828125,40.682720875945506,-74.01214599609375,40.695216613517154",
+  "center": "-74.0203857421875,40.688968744731326",
+  "zoom_level": 17,
+  "profile": "mercator",
+  "tilesize": "256",
+  "area": "1934934.2634260547",
+  "scheme": "xyz",
+  "generator": "EliteMapper by Visor Dynamics",
+  "type": "overlay",
+  "attribution": "EliteMapper by Visor Dynamics",
+  "launch_location": "-74.0203857421875,40.688968744731326"
+}

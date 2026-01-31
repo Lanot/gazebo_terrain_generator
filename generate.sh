@@ -16,4 +16,4 @@ mkdir -p $GAZEBO_WORLD_PATH
 # export MAPBOX_API_KEY="Personal API Key"
 export GAZEBO_WORLD_GENERATOR_MERGE_TERRAIN_TILES=0
 
-python scripts/server.py
+python scripts/generate.py
