@@ -14,6 +14,5 @@ mkdir -p $GAZEBO_WORLD_PATH
 
 # Uncomment the line below and add your API KEY, or add the line to ~/.bashrc for permanent store
 # export MAPBOX_API_KEY="Personal API Key"
-export GAZEBO_WORLD_GENERATOR_MERGE_ORTHO_COLUMN_TILES=1
 
 python scripts/server.py

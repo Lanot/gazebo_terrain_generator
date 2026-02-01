@@ -2,4 +2,5 @@
                   <diffuse>model://$MODELNAME$/textures/$AERIALMAP$</diffuse>
                   <normal>model://$MODELNAME$/textures/$AERIALMAP$</normal>
                   <size>$SIZEX$ $SIZEY$ $SIZEZ$</size>
+                  <pos>$POSX$ $POSY$ $POSZ$</pos>
               </texture>
