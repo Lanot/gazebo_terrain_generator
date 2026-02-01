@@ -18,33 +18,32 @@ import requests
 app = Flask(__name__)
 lock = threading.Lock()
 
-
 task_status = {"status": "idle"}  # Global variable to track task status
-
 
 outputdirectory = None
 
-def random_string():
 
-	return uuid.uuid4().hex.upper()[0:6]
+def random_string():
+    return uuid.uuid4().hex.upper()[0:6]
+
 
 def process_end_download(bounds, zoom_level, outputDirectory, outputFile, filePath):
-	global task_status
-	try:
-		task_status["status"] = "in_progress"
-	 	#Perform the long-running task
-		FileWriter.close(lock, os.path.join(globalParam.OUTPUT_BASE_PATH, outputDirectory), filePath, zoom_level)
-		true_boundaries = maptile_utiles.get_true_boundaries(bounds, zoom_level)
-		download_dem_data(true_boundaries, os.path.join(globalParam.OUTPUT_BASE_PATH, "dem"))
-		orthodir_path = os.path.join(globalParam.OUTPUT_BASE_PATH, outputDirectory)
-		terrian_generator = GazeboTerrianGenerator(orthodir_path)
-		terrian_generator.generate_gazebo_world()
-		task_status["status"] = "completed"
-		print("Gazebo world generation completed successfully.")
-
-	except Exception as e:
-		task_status["status"] = "failed"
-		print(f"Error during processing: {e}")
+    global task_status
+    try:
+        task_status["status"] = "in_progress"
+        # Perform the long-running task
+        FileWriter.close(lock, os.path.join(globalParam.OUTPUT_BASE_PATH, outputDirectory), filePath, zoom_level)
+        true_boundaries = maptile_utiles.get_true_boundaries(bounds, zoom_level)
+        download_dem_data(true_boundaries, os.path.join(globalParam.OUTPUT_BASE_PATH, "dem"))
+        orthodir_path = os.path.join(globalParam.OUTPUT_BASE_PATH, outputDirectory)
+        terrian_generator = GazeboTerrianGenerator(orthodir_path)
+        terrian_generator.generate_gazebo_world()
+        task_status["status"] = "completed"
+        print("Gazebo world generation completed successfully.")
+    
+    except Exception as e:
+        task_status["status"] = "failed"
+        print(f"Error during processing: {e}")
 
 
 def validate_mapbox_key(api_key):
@@ -64,126 +63,130 @@ def validate_mapbox_key(api_key):
             return False
     except requests.exceptions.ConnectionError:
         print(" Cannot validate Mapbox API key - no internet connection.")
-        return False  
+        return False
     except requests.exceptions.Timeout:
         print("Mapbox API validation timed out.")
-        return False  
+        return False
     except Exception as e:
         print(f"Error validating Mapbox API key: {e}")
-        return False 
+        return False
 
 
 @app.route('/task-status', methods=['GET'])
 def task_status_endpoint():
-	global task_status
-	result = {}
-	result["code"] = 200
-	result["message"] = task_status
-	return jsonify(result)
+    global task_status
+    result = {}
+    result["code"] = 200
+    result["message"] = task_status
+    return jsonify(result)
+
 
 @app.route('/download-tile', methods=['POST'])
 def download_tile():
-	postvars = request.form
-	x = int(postvars['x'])
-	y = int(postvars['y'])
-	z = int(postvars['z'])
-	quad = str(postvars['quad'])
-	timestamp = int(postvars['timestamp'])
-	outputDirectory = str(postvars['outputDirectory'])
-	outputFile = str(postvars['outputFile'])
-	outputScale = 1
-	source = str(postvars['source'])
+    postvars = request.form
+    x = int(postvars['x'])
+    y = int(postvars['y'])
+    z = int(postvars['z'])
+    quad = str(postvars['quad'])
+    timestamp = int(postvars['timestamp'])
+    outputDirectory = str(postvars['outputDirectory'])
+    outputFile = str(postvars['outputFile'])
+    outputScale = 1
+    source = str(postvars['source'])
+    
+    replaceMap = {
+        "x": str(x),
+        "y": str(y),
+        "z": str(z),
+        "quad": quad,
+        "timestamp": str(timestamp),
+    }
+    for key, value in replaceMap.items():
+        outputDirectory = outputDirectory.replace(f"{{{key}}}", value)
+        outputFile = outputFile.replace(f"{{{key}}}", value)
+    
+    filePath = os.path.join(globalParam.OUTPUT_BASE_PATH, outputDirectory, outputFile)
+    
+    result = {}
+    if FileWriter.exists(filePath, x, y, z):
+        result["code"] = 200
+        result["message"] = 'Tile already exists'
+    else:
+        tempFile = random_string() + ".jpg"
+        tempFilePath = os.path.join(globalParam.TEMP_PATH, tempFile)
+        result["code"] = Utils.downloadFileScaled(source, tempFilePath, x, y, z, outputScale)
+        
+        if os.path.isfile(tempFilePath):
+            FileWriter.addTile(lock, filePath, tempFilePath, x, y, z, outputScale)
+            with open(tempFilePath, "rb") as image_file:
+                result["image"] = base64.b64encode(image_file.read()).decode("utf-8")
+            os.remove(tempFilePath)
+            result["message"] = 'Tile Downloaded'
+        else:
+            result["message"] = 'Download failed'
+    
+    return jsonify(result)
 
-	replaceMap = {
-		"x": str(x),
-		"y": str(y),
-		"z": str(z),
-		"quad": quad,
-		"timestamp": str(timestamp),
-	}
-	for key, value in replaceMap.items():
-		outputDirectory = outputDirectory.replace(f"{{{key}}}", value)
-		outputFile = outputFile.replace(f"{{{key}}}", value)
-
-	filePath = os.path.join(globalParam.OUTPUT_BASE_PATH, outputDirectory, outputFile)
-
-	result = {}
-	if FileWriter.exists(filePath, x, y, z):
-		result["code"] = 200
-		result["message"] = 'Tile already exists'
-	else:
-		tempFile = random_string() + ".jpg"
-		tempFilePath = os.path.join(globalParam.TEMP_PATH, tempFile)
-		result["code"] = Utils.downloadFileScaled(source, tempFilePath, x, y, z, outputScale)
-
-		if os.path.isfile(tempFilePath):
-			FileWriter.addTile(lock, filePath, tempFilePath, x, y, z, outputScale)
-			with open(tempFilePath, "rb") as image_file:
-				result["image"] = base64.b64encode(image_file.read()).decode("utf-8")
-			os.remove(tempFilePath)
-			result["message"] = 'Tile Downloaded'
-		else:
-			result["message"] = 'Download failed'
-
-	return jsonify(result)
 
 @app.route('/start-download', methods=['POST'])
 def start_download():
+    postvars = request.form
+    outputScale = 1
+    outputDirectory = postvars['outputDirectory']
+    outputFile = postvars['outputFile']
+    zoom_level = int(postvars['maxZoom'])
+    timestamp = int(postvars['timestamp'])
+    bounds = list(map(float, postvars['bounds'].split(",")))
+    center = list(map(float, postvars['center'].split(",")))
+    area_rect = postvars['area']
+    launchLocation = list(map(float, postvars['launchLocation'].split(",")))
+    
+    outputDirectory = outputDirectory.replace("{timestamp}", str(timestamp))
+    outputFile = outputFile.replace("{timestamp}", str(timestamp))
+    filePath = os.path.join(globalParam.OUTPUT_BASE_PATH, outputDirectory, outputFile)
+    
+    FileWriter.addMetadata(
+        lock, os.path.join(globalParam.OUTPUT_BASE_PATH, outputDirectory), filePath, outputFile,
+        "Map Tiles Downloader via AliFlux", "jpg", bounds, center, area_rect,
+        zoom_level, "mercator", 256 * outputScale, launchLocation=launchLocation
+    )
+    global task_status
+    task_status = {"status": "idle"}
+    return jsonify({"code": 200, "message": "Metadata written"})
 
-	postvars = request.form
-	outputScale = 1
-	outputDirectory = postvars['outputDirectory']
-	outputFile = postvars['outputFile']
-	zoom_level = int(postvars['maxZoom'])
-	timestamp = int(postvars['timestamp'])
-	bounds = list(map(float, postvars['bounds'].split(",")))
-	center = list(map(float, postvars['center'].split(",")))
-	area_rect = postvars['area']
-	launchLocation = list(map(float, postvars['launchLocation'].split(",")))
-
-	outputDirectory = outputDirectory.replace("{timestamp}", str(timestamp))
-	outputFile = outputFile.replace("{timestamp}", str(timestamp))
-	filePath = os.path.join(globalParam.OUTPUT_BASE_PATH, outputDirectory, outputFile)
-
-	FileWriter.addMetadata(
-		lock, os.path.join(globalParam.OUTPUT_BASE_PATH, outputDirectory), filePath, outputFile,
-		"Map Tiles Downloader via AliFlux", "jpg", bounds, center, area_rect,
-		zoom_level, "mercator", 256 * outputScale, launchLocation=launchLocation
-	)
-	global task_status
-	task_status = {"status": "idle"} 
-	return jsonify({"code": 200, "message": "Metadata written"})
 
 @app.route('/end-download', methods=['POST'])
 def end_download():
-	postvars = request.form
-	outputDirectory = postvars['outputDirectory']
-	outputFile = postvars['outputFile']
-	zoom_level = int(postvars['maxZoom'])
-	timestamp = int(postvars['timestamp'])
-	bounds = list(map(float, postvars['bounds'].split(",")))
-
-	outputDirectory = outputDirectory.replace("{timestamp}", str(timestamp))
-	outputFile = outputFile.replace("{timestamp}", str(timestamp))
-	filePath = os.path.join(globalParam.OUTPUT_BASE_PATH, outputDirectory, outputFile)
-
-	FileWriter.close(lock, os.path.join(globalParam.OUTPUT_BASE_PATH, outputDirectory), filePath, zoom_level)
+    postvars = request.form
+    outputDirectory = postvars['outputDirectory']
+    outputFile = postvars['outputFile']
+    zoom_level = int(postvars['maxZoom'])
+    timestamp = int(postvars['timestamp'])
+    bounds = list(map(float, postvars['bounds'].split(",")))
+    
+    outputDirectory = outputDirectory.replace("{timestamp}", str(timestamp))
+    outputFile = outputFile.replace("{timestamp}", str(timestamp))
+    filePath = os.path.join(globalParam.OUTPUT_BASE_PATH, outputDirectory, outputFile)
+    
+    FileWriter.close(lock, os.path.join(globalParam.OUTPUT_BASE_PATH, outputDirectory), filePath, zoom_level)
     # Start the long-running task in a background thread
-	thread = threading.Thread(target=process_end_download, args=(bounds, zoom_level, outputDirectory, outputFile, filePath))
-	thread.start()
+    thread = threading.Thread(target=process_end_download,
+                              args=(bounds, zoom_level, outputDirectory, outputFile, filePath))
+    thread.start()
+    
+    return jsonify({"code": 200, "message": "Download ended"})
 
-	return jsonify({"code": 200, "message": "Download ended"})
 
 @app.route('/', defaults={'path': 'index.htm'})
 @app.route('/<path:path>')
 def serve_static(path):
-	file_dir = os.path.join(str(Path(__file__).resolve().parent), 'UI')
-	mime_type, _ = mimetypes.guess_type(path)
-	return send_from_directory(file_dir, path, mimetype=mime_type)
+    file_dir = os.path.join(str(Path(__file__).resolve().parent), 'UI')
+    mime_type, _ = mimetypes.guess_type(path)
+    return send_from_directory(file_dir, path, mimetype=mime_type)
+
 
 if __name__ == '__main__':
-	
-	if not validate_mapbox_key(globalParam.MAPBOX_API_KEY):
-		exit(1)
-	print("Starting Flask server...")
-	app.run(host='0.0.0.0', port=8080, threaded=True)
+    if not validate_mapbox_key(globalParam.MAPBOX_API_KEY):
+        exit(1)
+    print("Starting Flask server...")
+    app.run(host='0.0.0.0', port=8080, threaded=True)

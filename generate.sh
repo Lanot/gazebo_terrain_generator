@@ -14,5 +14,6 @@ mkdir -p $GAZEBO_WORLD_PATH
 
 # Uncomment the line below and add your API KEY, or add the line to ~/.bashrc for permanent store
 # export MAPBOX_API_KEY="Personal API Key"
+export IMWRITE_PNG_COMPRESSION=1
 
 python scripts/generate.py

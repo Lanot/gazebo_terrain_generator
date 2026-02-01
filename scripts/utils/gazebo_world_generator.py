@@ -278,8 +278,8 @@ class OrthoGenerator(ConcatImage):
             if OrthoGenerator.are_dimensions_equal(filtered_images[-1], img):
                 filtered_images.append(img)
         
-        compression_params = [cv2.IMWRITE_PNG_COMPRESSION, 9]
-        
+        compression_params = [cv2.IMWRITE_PNG_COMPRESSION, globalParam.IMWRITE_PNG_COMPRESSION]
+
         stitched_image = cv2.hconcat(filtered_images)
         
         # Save the stitched image

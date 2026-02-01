@@ -2,6 +2,7 @@ import os
 from pathlib import Path
 
 DEFAULT_MAPBOX_API_KEY = 'pk.eyJ1IjoiYXJhdmluZDE5NDAiLCJhIjoiY21jNDVyYTM5MDdxYjJqc2FjczA3bTBmeSJ9.kNLCV2BhlN0CRCOBJIpM1A'
+DEFAULT_IMWRITE_PNG_COMPRESSION = 9 # 1 Best Quality, 9 - Worse Quality
 
 class globalParam:
 
@@ -21,3 +22,4 @@ class globalParam:
 
     # Use Personal Mapbox API Key from ENV if exists, in othercase fallback to Default (Free) Mapbox API Key
     MAPBOX_API_KEY = os.environ.get('MAPBOX_API_KEY', DEFAULT_MAPBOX_API_KEY)
+    IMWRITE_PNG_COMPRESSION = int(os.environ.get('IMWRITE_PNG_COMPRESSION', DEFAULT_IMWRITE_PNG_COMPRESSION))
