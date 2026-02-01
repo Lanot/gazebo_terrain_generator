@@ -249,11 +249,8 @@ class OrthoGenerator(ConcatImage):
         Returns:
             None
         """
- 
+
         image_dir = os.path.join(path, str(zoomlevel))
-        # Check and create necessary directories
-        maptile_utiles.dir_check(os.path.join(globalParam.GAZEBO_MODEL_PATH, model_name, 'textures'),remove_existing=True)
-        maptile_utiles.dir_check(os.path.join(globalParam.TEMPORARY_SATELLITE_IMAGE, model_name),remove_existing=True)
         bound_array = boundaries.split(',')
         tile_boundaries = maptile_utiles.get_max_tilenumber(bound_array,zoomlevel)
         image_dir_list = self.get_x_tile_directories(image_dir,tile_boundaries)
@@ -511,6 +508,9 @@ class GazeboTerrianGenerator(HeightmapGenerator,OrthoGenerator):
         """
             Generate the gazebo world along with world files.
         """   
+        # Check and create necessary directories
+        maptile_utiles.dir_check(os.path.join(globalParam.GAZEBO_MODEL_PATH, self.model_name, 'textures'),remove_existing=True)
+        maptile_utiles.dir_check(os.path.join(globalParam.TEMPORARY_SATELLITE_IMAGE, self.model_name),remove_existing=True)
 
         print("Map tiles directory being used : ",self.tile_path)
         if os.path.isfile(os.path.join(self.tile_path, 'metadata.json')) and self.tile_path != '':
@@ -522,7 +522,6 @@ class GazeboTerrianGenerator(HeightmapGenerator,OrthoGenerator):
 
             # Height Tile take small size in Megabytes
             gazebo_height_tile = GazeboTile(height_image, w_size_x, w_size_y, w_size_z, w_pose_x, w_pose_y, w_pose_z)
-            
     
             if self.merge_terrain_tiles:
                 ortho_image = self.generate_ortho(self.tile_path,self.zoom_level,self.model_name,self.boundaries)
