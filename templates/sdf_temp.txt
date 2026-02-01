@@ -18,15 +18,12 @@
           <geometry>
             <heightmap>
               <use_terrain_paging>false</use_terrain_paging>
-              <texture>
-                <diffuse>model://$MODELNAME$/textures/$AERIALMAP$</diffuse>
-                <normal>model://$MODELNAME$/textures/$AERIALMAP$</normal>
-                <size>$SIZEX$ $SIZEY$ $SIZEZ$</size>
-              </texture>
               <uri>model://$MODELNAME$/textures/$HEIGHTMAP$</uri>
               <size>$SIZEX$ $SIZEY$ $SIZEZ$</size>
               <pos>$POSX$ $POSY$ $POSZ$</pos>
               <sampling>2</sampling>
+
+              $TEXTURES$
 
             </heightmap>
           </geometry>
