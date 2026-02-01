@@ -21,4 +21,4 @@ class globalParam:
 
     # Use Personal Mapbox API Key from ENV if exists, in othercase fallback to Default (Free) Mapbox API Key
     MAPBOX_API_KEY = os.environ.get('MAPBOX_API_KEY', DEFAULT_MAPBOX_API_KEY)
-    MERGE_TERRAIN_TILES = os.environ.get('GAZEBO_WORLD_GENERATOR_MERGE_TERRAIN_TILES', '1') == '1'
+    MERGE_ORTHO_COLUMN_TILES = os.environ.get('GAZEBO_WORLD_GENERATOR_MERGE_ORTHO_COLUMN_TILES', '1') == '1'

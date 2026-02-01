@@ -17,7 +17,7 @@ if __name__ == '__main__':
     true_boundaries = maptile_utiles.get_true_boundaries(bounds, zoom_level)
     download_dem_data(true_boundaries, os.path.join(globalParam.OUTPUT_BASE_PATH, "dem"))
     orthodir_path = os.path.join(globalParam.OUTPUT_BASE_PATH, outputDirectory)
-    terrian_generator = GazeboTerrianGenerator(orthodir_path, merge_terrain_tiles=globalParam.MERGE_TERRAIN_TILES)
+    terrian_generator = GazeboTerrianGenerator(orthodir_path, merge_ortho_column_tiles=globalParam.MERGE_ORTHO_COLUMN_TILES)
     terrian_generator.generate_gazebo_world()
 
     print("Gazebo world generation completed successfully.")
