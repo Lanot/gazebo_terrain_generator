@@ -1,5 +1,5 @@
-<texture>
-    <diffuse>model://$MODELNAME$/textures/$AERIALMAP$</diffuse>
-    <normal>model://$MODELNAME$/textures/$AERIALMAP$</normal>
-    <size>$SIZEX$ $SIZEY$ $SIZEZ$</size>
-</texture>
+              <texture>
+                  <diffuse>model://$MODELNAME$/textures/$AERIALMAP$</diffuse>
+                  <normal>model://$MODELNAME$/textures/$AERIALMAP$</normal>
+                  <size>$SIZEX$ $SIZEY$ $SIZEZ$</size>
+              </texture>

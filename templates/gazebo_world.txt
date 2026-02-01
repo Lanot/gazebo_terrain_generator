@@ -3,6 +3,7 @@
   <world name="$MODELNAME$">
     <gravity>0 0 -9.8066</gravity>
 
+    <!-- Spherical Coordinates of Launch Position -->
     <spherical_coordinates>
       <surface_model>EARTH_WGS84</surface_model>
       <latitude_deg>$ORIGIN_LAT$</latitude_deg>

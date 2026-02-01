@@ -22,9 +22,7 @@
               <size>$SIZEX$ $SIZEY$ $SIZEZ$</size>
               <pos>$POSX$ $POSY$ $POSZ$</pos>
               <sampling>2</sampling>
-
-              $TEXTURES$
-
+$TEXTURES$
             </heightmap>
           </geometry>
         </visual>
