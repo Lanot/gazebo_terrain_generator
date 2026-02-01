@@ -13,11 +13,11 @@ if __name__ == '__main__':
     zoom_level = 17
     timestamp = '1769886925501'
     bounds = list(map(float, bounds.split(",")))
-
+    
     true_boundaries = maptile_utiles.get_true_boundaries(bounds, zoom_level)
     download_dem_data(true_boundaries, os.path.join(globalParam.OUTPUT_BASE_PATH, "dem"))
     orthodir_path = os.path.join(globalParam.OUTPUT_BASE_PATH, outputDirectory)
     terrian_generator = GazeboTerrianGenerator(orthodir_path)
     terrian_generator.generate_gazebo_world()
-
+    
     print("Gazebo world generation completed successfully.")

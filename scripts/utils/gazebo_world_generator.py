@@ -18,7 +18,7 @@ from utils.gazebo_helpers import GazeboTile, GazeboDimensions
 
 class ConcatImage:
     def __init__(self, **kwargs):
-        # super().__init__(**kwargs)
+        super().__init__(**kwargs)
     
     def get_x_tile_directories(self, image_dir: str, tile_boundaries: dict) -> list:
         """
