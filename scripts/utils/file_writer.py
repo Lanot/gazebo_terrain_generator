@@ -188,29 +188,46 @@ class FileWriter:
 		target.write(config_content)
     	# Close file
 		target.close()
-	
+
+
 	@staticmethod
-	def write_sdf_file(sdf_template: str, model_name: str, path: str,
-                       height_tile: GazeboTile, ortho_tiles: list[GazeboTile] = []
-    ):
+	def write_sdf_file(sdf_template: str, model_name: str, path: str, height_tile: GazeboTile, ortho_tiles: list[GazeboTile] = []):
 		'''
-        Write an SDF file with the provided template and model details.
+		Write an SDF file with the provided template and model details.
 
-        Args:
-            sdf_template (str): The template content for the SDF file.
-            model_name (str): The name of the model.
-            path (str): The directory path to save the SDF file.
-            tiles (list[GazeboTile]): List of Aerial Tiles to use inject.
+		Args:
+			sdf_template (str): The template content for the SDF file.
+			model_name (str): The name of the model.
+			path (str): The directory path to save the SDF file.
+			tiles (list[GazeboTile]): List of Aerial Tiles to use inject.
 
-        Returns:
-            None
+		Returns:
+			None
 
 		'''
-		
-		#heightmap = model_name+'_height_map.tif'
-		#aerialimg = model_name+'_aerial.png'
+		# heightmap = model_name+'_height_map.tif'
+		# aerialimg = model_name+'_aerial.png'
 
-    	# Filling in content
+		# Preparing textures content
+		textures = []
+		for ortho_tile in ortho_tiles:
+			texture_template = FileWriter.read_template(os.path.join(globalParam.TEMPLATE_DIR_PATH, 'sdf_texture_temp.txt'))
+			texture_template = texture_template.replace("$MODEL$", str(model_name))
+			texture_template = texture_template.replace("$MODELNAME$", model_name)
+
+			texture_template = texture_template.replace("$AERIALMAP$", str(ortho_tile.path))
+
+			texture_template = texture_template.replace("$SIZEX$", str(ortho_tile.size_x))
+			texture_template = texture_template.replace("$SIZEY$", str(ortho_tile.size_y))
+			texture_template = texture_template.replace("$SIZEZ$", str(ortho_tile.size_z))
+
+			texture_template = texture_template.replace("$POSX$", str(ortho_tile.pose_x))
+			texture_template = texture_template.replace("$POSY$", str(ortho_tile.pose_y))
+			texture_template = texture_template.replace("$POSZ$", str(ortho_tile.pose_z))
+
+			textures.append(texture_template)
+
+		# Filling in content
 		sdf_template = sdf_template.replace("$MODEL$", str(model_name))
 
 		sdf_template = sdf_template.replace("$MODELNAME$", model_name)
@@ -224,14 +241,16 @@ class FileWriter:
 		sdf_template = sdf_template.replace("$POSZ$", str(height_tile.pose_z))
 
 		# sdf_template = sdf_template.replace("$AERIALMAP$",str(aerialimg))
-		sdf_template = sdf_template.replace("$HEIGHTMAP$",str(height_tile.path))
+		sdf_template = sdf_template.replace("$HEIGHTMAP$", str(height_tile.path))
 
-    	# Ensure results are a string
+		sdf_template = sdf_template.replace("$TEXTURES$", str("".join(textures)))
+
+		# Ensure results are a string
 		sdf_content = str(sdf_template)
-    	# Open file
-		target = open(os.path.join(path,"model.sdf"), "w")
+		# Open file
+		target = open(os.path.join(path, "model.sdf"), "w")
 
-    	# Write to model.sdf
+		# Write to model.sdf
 		target.write(sdf_content)
 		target.close()
 
