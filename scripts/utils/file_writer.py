@@ -3,7 +3,7 @@ import json
 import shutil
 from utils.param import globalParam
 
-
+from utils.gazebo_helpers import GazeboTile
 
 
 class FileWriter:
@@ -190,39 +190,41 @@ class FileWriter:
 		target.close()
 	
 	@staticmethod
-	def write_sdf_file(sdf_template,model_name,  size_x, size_y, size_z,pose_x,pose_y,origin_height,path):
+	def write_sdf_file(sdf_template: str, model_name: str, path: str,
+                       height_tile: GazeboTile, ortho_tiles: list[GazeboTile] = []
+    ):
 		'''
         Write an SDF file with the provided template and model details.
 
         Args:
             sdf_template (str): The template content for the SDF file.
             model_name (str): The name of the model.
-            size_x (float): The size in the x-direction.
-            size_y (float): The size in the y-direction.
-            size_z (float): The size in the z-direction.
-            origin_height (float): The origin height.
             path (str): The directory path to save the SDF file.
+            tiles (list[GazeboTile]): List of Aerial Tiles to use inject.
 
         Returns:
             None
 
 		'''
 		
-		heightmap = model_name+'_height_map.tif'
-		aerialimg = model_name+'_aerial.png'
+		#heightmap = model_name+'_height_map.tif'
+		#aerialimg = model_name+'_aerial.png'
+
     	# Filling in content
 		sdf_template = sdf_template.replace("$MODEL$", str(model_name))
 
 		sdf_template = sdf_template.replace("$MODELNAME$", model_name)
-		sdf_template = sdf_template.replace("$SIZEX$", str(size_x))
-		sdf_template = sdf_template.replace("$SIZEY$", str(size_y))
-		sdf_template = sdf_template.replace("$SIZEZ$", str(size_z))
-		
-		sdf_template = sdf_template.replace("$POSX$",str(pose_x))
-		sdf_template = sdf_template.replace("$POSY$",str(pose_y))
-		sdf_template = sdf_template.replace("$POSZ$",str(origin_height))
-		sdf_template = sdf_template.replace("$AERIALMAP$",str(aerialimg))
-		sdf_template = sdf_template.replace("$HEIGHTMAP$",str(heightmap))
+
+		sdf_template = sdf_template.replace("$SIZEX$", str(height_tile.size_x))
+		sdf_template = sdf_template.replace("$SIZEY$", str(height_tile.size_y))
+		sdf_template = sdf_template.replace("$SIZEZ$", str(height_tile.size_z))
+
+		sdf_template = sdf_template.replace("$POSX$", str(height_tile.pose_x))
+		sdf_template = sdf_template.replace("$POSY$", str(height_tile.pose_y))
+		sdf_template = sdf_template.replace("$POSZ$", str(height_tile.pose_z))
+
+		# sdf_template = sdf_template.replace("$AERIALMAP$",str(aerialimg))
+		sdf_template = sdf_template.replace("$HEIGHTMAP$",str(height_tile.path))
 
     	# Ensure results are a string
 		sdf_content = str(sdf_template)

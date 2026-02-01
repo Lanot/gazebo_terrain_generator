@@ -13,12 +13,12 @@ from geopy.point import Point
 from multiprocessing import Pool, cpu_count
 from PIL import Image
 import math
-
-
+from utils.gazebo_helpers import GazeboTile
 
 class ConcatImage:
     def __init__(self,**kwargs):
-        super().__init__(**kwargs)
+        #super().__init__(**kwargs)
+        self.merge_terrain_tiles = kwargs.get("merge_terrain_tiles", True)
 
     def get_x_tile_directories(self, image_dir: str, tile_boundaries: dict) -> list:
         """
@@ -151,7 +151,7 @@ class HeightmapGenerator(ConcatImage):
 
     
 
-    def generate_rgb_heightmap(self,model_path,boundaries,zoomlevel) -> list:
+    def generate_rgb_heightmap(self,model_path,boundaries,zoomlevel) -> str:
 
         #get the true boundaries as there is a padding non uniform padding added 
         bound_array = boundaries.split(',')
@@ -226,7 +226,7 @@ class HeightmapGenerator(ConcatImage):
         self.heightmap = Image.fromarray(resized_map, mode='L')  # 'L' for 8-bit grayscale
         self.heightmap.save(os.path.join(globalParam.GAZEBO_MODEL_PATH, model, 'textures', model+'_height_map.tif'), format="TIFF")
 
-
+        return model+'_height_map.tif'
 
     def crop_dem_image(self,px_bound,height_map):
         cropped_image = height_map[px_bound["northwest"][1]:px_bound["southeast"][1], 
@@ -239,7 +239,7 @@ class OrthoGenerator(ConcatImage):
         super().__init__(**kwargs)
 
 
-    def generate_ortho(self,path: str,zoomlevel,model_name,boundaries)-> None:
+    def generate_ortho(self,path: str,zoomlevel,model_name,boundaries)-> str:
         """
         Generate the aerial image of the map.
 
@@ -258,12 +258,12 @@ class OrthoGenerator(ConcatImage):
         tile_boundaries = maptile_utiles.get_max_tilenumber(bound_array,zoomlevel)
         image_dir_list = self.get_x_tile_directories(image_dir,tile_boundaries)
 
-
         temp_output_dir = os.path.join(globalParam.TEMPORARY_SATELLITE_IMAGE, model_name)
         args_list = [
             (self, dir_name, image_dir, tile_boundaries, temp_output_dir)
             for dir_name in image_dir_list
         ]
+
         #  Multiprocessing call
         with Pool(processes=cpu_count()) as pool:
             pool.map(OrthoGenerator._run_instance_method, args_list)
@@ -271,7 +271,8 @@ class OrthoGenerator(ConcatImage):
         image_list = sorted([
             os.path.join(temp_output_dir, img)
             for img in os.listdir(temp_output_dir) if img.endswith('.png')
-        ])            
+        ])
+
         images = [cv2.imread(path) for path in image_list]
         filtered_images = [images[0]]
 
@@ -284,7 +285,7 @@ class OrthoGenerator(ConcatImage):
         compression_params = [cv2.IMWRITE_PNG_COMPRESSION, 9]
         cv2.imwrite(os.path.join(globalParam.GAZEBO_MODEL_PATH, model_name, 'textures', model_name+'_aerial.png'), stitched_image, compression_params)
 
-
+        return model_name+'_aerial.png'
 
 class GazeboTerrianGenerator(HeightmapGenerator,OrthoGenerator):
     def __init__(self,tile_path:str,**kwargs):
@@ -354,7 +355,7 @@ class GazeboTerrianGenerator(HeightmapGenerator,OrthoGenerator):
             "altitude": self.get_amsl(float(location_array[1]), float(location_array[0]))
             }
 
-    def gen_sdf(self, size_x: float, size_y: float, size_z: float, pose_x: float, pose_y: float, pose_z: float) -> None:
+    def gen_sdf(self, height_tile: GazeboTile, ortho_tiles: list[GazeboTile]) -> None:
         """
         Generate the SDF file for the world.
 
@@ -372,7 +373,9 @@ class GazeboTerrianGenerator(HeightmapGenerator,OrthoGenerator):
         """
 
         template = FileWriter.read_template(os.path.join(globalParam.TEMPLATE_DIR_PATH ,'sdf_temp.txt'))
-        FileWriter.write_sdf_file(template, self.model_name, size_x, size_y, size_z,pose_x,pose_y,pose_z, os.path.join(globalParam.GAZEBO_MODEL_PATH, self.model_name))
+        FileWriter.write_sdf_file(template, self.model_name,
+            os.path.join(globalParam.GAZEBO_MODEL_PATH, self.model_name), height_tile, ortho_tiles
+        )
 
     def gen_config(self) -> None:
         """
@@ -511,14 +514,30 @@ class GazeboTerrianGenerator(HeightmapGenerator,OrthoGenerator):
 
         print("Map tiles directory being used : ",self.tile_path)
         if os.path.isfile(os.path.join(self.tile_path, 'metadata.json')) and self.tile_path != '':
-            self.generate_ortho(self.tile_path,self.zoom_level,self.model_name,self.boundaries)
-            print("Satellite image generated successfully")
-            self.generate_rgb_heightmap(self.tile_path,self.boundaries,self.zoom_level)
-            (size_x,size_y,size_z,pose_x,posey,posez) = self.get_world_dimensions()
+
+            height_image = self.generate_rgb_heightmap(self.tile_path,self.boundaries,self.zoom_level)
+            print("Heightmap image generated successfully")
+
+            (w_size_x, w_size_y, w_size_z, w_pose_x, w_pose_y, w_pose_z) = self.get_world_dimensions()
+
+            # Height Tile take small size in Megabytes
+            gazebo_height_tile = GazeboTile(height_image, w_size_x, w_size_y, w_size_z, w_pose_x, w_pose_y, w_pose_z)
+            
+    
+            if self.merge_terrain_tiles:
+                ortho_image = self.generate_ortho(self.tile_path,self.zoom_level,self.model_name,self.boundaries)
+                gazebo_ortho_tiles = [GazeboTile(ortho_image, w_size_x, w_size_y, w_size_z, w_pose_x, w_pose_y, w_pose_z)]
+                print("Satellite image generated successfully")
+            else:
+                print("Satellite image is not generated successfully")
+                exit()
+
+            for i, tile in enumerate(gazebo_ortho_tiles):
+                print(f'\nidx: {i}\ntile.path: {tile.path}\nsize_x: {tile.size_x}, size_y: {tile.size_y}, size_z: {tile.size_z},\npose_x: {tile.pose_x}, pose_y: {tile.pose_y}, pose_z: {tile.pose_z}\n\n')
 
             # Generate SDF files for the world
             self.gen_config()
-            self.gen_sdf(size_x,size_y,size_z,pose_x,posey,posez)
+            self.gen_sdf(gazebo_height_tile, gazebo_ortho_tiles)
             maptile_utiles.dir_check(globalParam.GAZEBO_WORLD_PATH)
 
             self.gen_world()
