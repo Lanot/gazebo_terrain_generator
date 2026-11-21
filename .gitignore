@@ -5,3 +5,4 @@ terrain_generator/
 temp/
 *.pyc
 .idea
+generate_*.sh
