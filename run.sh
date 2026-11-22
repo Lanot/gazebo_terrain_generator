@@ -4,8 +4,9 @@
 #python3 -m venv terrain_generator
 cur_dir=$(dirname "$(realpath $0)")
 
+#python3 -m venv terrain_generator
 source terrain_generator/bin/activate
-pip install -r requirements.txt
+#pip install -r requirements.txt
 
 export GAZEBO_MODEL_PATH="$cur_dir/output/gazebo_terrain/models"
 export GAZEBO_WORLD_PATH="$cur_dir/output/gazebo_terrain/worlds"
